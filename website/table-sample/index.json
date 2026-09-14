@@ -1,0 +1,19 @@
+{
+ "version": 1,
+ "leafEncoding": [
+  "address",
+  "uint256"
+ ],
+ "ethBlock": 1,
+ "ethTimestamp": 0,
+ "polygonBlock": 1,
+ "polygonTimestamp": 0,
+ "rows": 3,
+ "totalWei": "101234609623456789012345678",
+ "merkleRoot": "0x2f249a62a4407e2d6845a55e4a66d3f475afeefbcf47029228a725992c7a944d",
+ "csv": "snapshot-1-1.csv",
+ "csvSha256": "b2729aa787369d9befeb05947ee0166a7c80c37cd1e18ff8dff2ab204a390d4c",
+ "shards": 256,
+ "generatedAt": "1970-01-01T00:00:00Z",
+ "tool": "website/table-sample/make_sample.mjs (SAMPLE - NOT A SNAPSHOT)"
+}

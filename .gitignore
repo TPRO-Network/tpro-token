@@ -1,0 +1,25 @@
+# foundry (lib/ is a git submodule pinned at a tag since round 4 - tracked, not ignored)
+cache/
+out/
+broadcast/
+# generated analyzer artifacts
+report.md
+crytic-export/
+# python
+__pycache__/
+*.pyc
+.venv/
+# secrets & data - NEVER commit
+.env
+.env.*
+!.env.example
+*.db
+data/
+tmp/
+# oracle sync artifacts (cron-managed, read-only copies)
+# the real snapshot table lives next to the page only at publication - never in git before the first preview publication
+website/table/
+# the final table copied to the repo root on the snapshot day for the deploy script (TABLE_INDEX=table/index.json)
+table/
+# public-repo provenance written by scripts/export-public.sh (private sha -> public sha); generated per machine, never committed
+PUBLIC_REF

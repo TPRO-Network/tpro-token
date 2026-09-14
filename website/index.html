@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Defense-in-depth: no external scripts can ever load; connections are
+     same-origin (the published table) or the JSON-RPC hosts listed below (the
+     SAME list as config.js base.rpc - a host missing here is blocked silently).
+     The primary XSS defense is strict validation of every remote value before it
+     renders (see VALID_* in the script). The host sends the same policy as a
+     header plus frame-ancestors 'none' / X-Frame-Options (website/vercel.json);
+     meta CSP cannot express frame-ancestors. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self' https://mainnet.base.org https://base.drpc.org https://1rpc.io; img-src data:; base-uri 'none'; form-action 'none'">
+<title>TPRO Claim - Official Page</title>
+<style>
+  :root { --green:#00ff41; --dim:#0a3d16; --bg:#020803; --panel:#04120a; --text:#c8ffd4;
+          --warn:#ffb347; --red:#ff5c5c; --muted:#5fae6f; --faint:#5aa86a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:"Courier New",monospace; line-height:1.6; }
+  .wrap { max-width:860px; margin:0 auto; padding:40px 20px 80px; }
+  h1 { color:var(--green); font-size:1.9rem; letter-spacing:.08em; text-shadow:0 0 18px rgba(0,255,65,.45); }
+  .sub { color:var(--muted); margin:6px 0 28px; }
+  h2 { color:var(--green); font-size:1.1rem; margin:34px 0 10px; letter-spacing:.06em; }
+  h3 { color:var(--green); font-size:.95rem; margin:16px 0 4px; }
+  .panel { background:var(--panel); border:1px solid var(--dim); border-radius:10px; padding:18px; margin:12px 0; }
+  .warn { border-color:#7a4a00; background:#140d02; color:var(--warn); }
+  .warn strong { color:#ffd28a; }
+  .danger { border-color:#7a1a1a; background:#180404; color:var(--red); }
+  #banners { position:sticky; top:0; z-index:50; }
+  .banner { background:#331c00; color:#ffd28a; border-bottom:2px solid #7a4a00;
+            padding:10px 16px; text-align:center; font-weight:bold; letter-spacing:.05em; }
+  .banner.killed { background:#3a0505; color:#ffb3b3; border-color:#7a1a1a; }
+  .banner.note { background:#0a2a12; color:#a8f0b8; border-color:#0a3d16; font-weight:normal; }
+  code { color:var(--green); overflow-wrap:anywhere; }
+  code.box { display:inline-block; background:#000; border:1px solid var(--dim); border-radius:6px;
+             padding:8px 10px; font-size:.85rem; }
+  pre { background:#000; border:1px solid var(--dim); border-radius:6px; padding:10px; overflow-x:auto;
+        font-size:.8rem; color:var(--text); margin:6px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+  button { background:var(--green); color:#02140a; border:0; border-radius:6px; padding:10px 16px;
+           font-family:inherit; font-weight:bold; cursor:pointer; }
+  button:disabled { background:#1c3a24; color:#7fa88a; cursor:not-allowed; }
+  button.ghost { background:transparent; color:var(--green); border:1px solid var(--dim); }
+  button.ghost:disabled { color:#7fa88a; }
+  button:active:not(:disabled) { transform:scale(.97); }
+  input[type=text] { background:#000; border:1px solid var(--dim); border-radius:6px; color:var(--text);
+           padding:10px 12px; font-family:inherit; font-size:.95rem; width:100%; }
+  input:disabled { color:#7fa88a; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+  .stat { background:#000; border:1px solid var(--dim); border-radius:8px; padding:12px; }
+  .stat .k { color:var(--muted); font-size:.78rem; letter-spacing:.04em; }
+  .stat .v { color:var(--green); font-size:1.15rem; margin-top:2px; overflow-wrap:anywhere; }
+  .stat .v.small { font-size:.85rem; }
+  .bar { height:18px; background:#000; border:1px solid var(--dim); border-radius:9px; overflow:hidden; margin:10px 0 4px; }
+  .bar > div { height:100%; background:linear-gradient(90deg,#0a5c26,var(--green)); width:0%;
+               box-shadow:0 0 12px rgba(0,255,65,.5); transition:width .8s; }
+  a { color:var(--green); }
+  .muted { color:var(--muted); font-size:.85rem; }
+  .faint { color:var(--faint); font-size:.8rem; }
+  .ok { color:var(--green); } .bad { color:var(--red); } .pend { color:var(--warn); }
+  .faq p { color:var(--text); font-size:.9rem; margin:0 0 6px; }
+  details { margin-top:10px; } summary { cursor:pointer; color:var(--muted); font-size:.85rem; }
+  #toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#000;
+           border:1px solid var(--green); color:var(--green); border-radius:8px; padding:10px 16px;
+           display:none; z-index:200; max-width:90vw; }
+  .foot { margin-top:44px; color:var(--faint); font-size:.8rem; }
+</style>
+</head>
+<body>
+<div id="banners" role="alert" aria-live="assertive"></div>
+<div class="wrap">
+  <h1>TPRO CLAIM</h1>
+  <div class="sub">Your snapshot balance, delivered on Base. Same address. Whole amount. One transaction.</div>
+
+  <div class="panel warn">
+    <strong>Read this first - it protects your tokens.</strong><br>
+    &bull; This page - <strong id="official-url">claim.tpro.network</strong> - is the ONLY official claim page. We never DM links, we never write to holders first, we never ask you to "verify", "sync" or "pre-register" a wallet.<br>
+    &bull; You claim from the <strong>same address</strong> that held TPRO at the snapshot, with a <strong>self-custody wallet</strong> (hardware, Rabby, MetaMask). Only that address can claim its row - nobody else, not even us.<br>
+    &bull; The ONLY thing you will ever be asked to do is <strong>ONE transaction on Base</strong>, sent by your own wallet to the published claim contract, with <strong>0 ETH</strong> value. <strong>Never a signature request, never a token approval, never anything on Ethereum or Polygon, never sending old tokens anywhere.</strong> If a wallet prompt shows anything else: close it.<br>
+    &bull; The whole row is paid in <strong>one transaction</strong>. No partial claims, no penalty, no deadline pressure except the closing date shown in STATUS. A claim must be <strong>mined before</strong> that closing moment - do not leave it to the last hour.<br>
+    &bull; You pay only the Base network fee (cents). Nothing else, to nobody, ever.<br>
+    &bull; After you claim: TPRO on Base supports gasless "permit" signatures. <strong>Never sign a message you did not initiate</strong> - a signature can move your tokens without a transaction.<br>
+    &bull; Smart-contract wallets (Safe, multisig): read the notice below before doing anything.
+  </div>
+
+  <h2>STATUS <span class="faint" id="stats-updated"></span></h2>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <div class="muted">Claimed so far (share of the whole table)</div>
+      <div class="ok" id="pct">-</div>
+    </div>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pctbar-wrap"><div id="pctbar"></div></div>
+    <div class="grid" style="margin-top:12px">
+      <div class="stat"><div class="k">ADDRESSES IN THE TABLE</div><div class="v" id="s-rows">-</div></div>
+      <div class="stat"><div class="k">TOTAL IN THE TABLE</div><div class="v" id="s-total">-</div></div>
+      <div class="stat"><div class="k">CLAIMED TO WALLETS</div><div class="v" id="s-claimed">-</div></div>
+      <div class="stat"><div class="k">CLAIMS CLOSE</div><div class="v small" id="s-sunset">-</div></div>
+      <div class="stat"><div class="k">CLAIM CONTRACT ON BASE</div><div class="v small" id="s-dist">-</div></div>
+      <div class="stat"><div class="k">TPRO TOKEN ON BASE</div><div class="v small" id="s-token">-</div></div>
+    </div>
+    <div class="muted" style="margin-top:10px" id="verify-line" role="status" aria-live="polite">Loading the published table...</div>
+    <div class="faint" style="margin-top:4px" id="blocks-line"></div>
+    <div class="faint" id="integrity-line"></div>
+  </div>
+
+  <h2>YOUR CLAIM</h2>
+  <div class="panel" id="lookup-panel">
+    <div class="row" id="connect-row">
+      <button id="btn-connect">CONNECT WALLET</button>
+      <span class="muted" id="connect-hint">or check any address read-only:</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <input type="text" id="addr-input" placeholder="0x... (read-only lookup)" autocomplete="off" spellcheck="false" aria-label="Address to look up">
+      <button id="btn-lookup" class="ghost">LOOKUP</button>
+    </div>
+    <div id="acct" class="muted" style="margin-top:8px" role="status" aria-live="polite"></div>
+  </div>
+  <div class="panel" id="row-panel" style="display:none">
+    <div class="grid">
+      <div class="stat"><div class="k">YOUR SNAPSHOT AMOUNT</div><div class="v" id="r-amount">-</div><div class="faint" id="r-wei"></div></div>
+      <div class="stat"><div class="k">STATUS</div><div class="v" id="r-status">-</div></div>
+      <div class="stat"><div class="k">PROOF CHECK</div><div class="v" id="r-proof">-</div></div>
+    </div>
+    <div id="r-note" class="muted" style="margin-top:10px" role="status" aria-live="polite"></div>
+    <div id="r-cw"></div>
+    <div id="wallet-show" class="panel warn" style="display:none; margin:10px 0 0">
+      <strong>WHAT YOUR WALLET WILL SHOW - compare before you confirm.</strong><br>
+      To: <code id="ws-to"></code> (the claim contract - the same address as in the official announcement and on Basescan; compare the first and last four characters)<br>
+      Value: <strong>0 ETH</strong> &nbsp;|&nbsp; Network: <strong>Base (chain id 8453)</strong> &nbsp;|&nbsp; Data begins with <code>0x3d13f874</code> &nbsp;|&nbsp; <strong>ONE transaction</strong><br>
+      We never ask you to sign a message, approve a token, or do anything on Ethereum or Polygon. If your wallet shows a signature request, an approval, a different address, a different network or any ETH amount: <strong>close it</strong>.
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btn-claim" disabled>CLAIM</button>
+      <button id="btn-addtoken" class="ghost" style="display:none">ADD TPRO (BASE) TO WALLET</button>
+      <button id="btn-refresh" class="ghost">REFRESH</button>
+    </div>
+    <div id="tx-note" class="faint" style="margin-top:8px" role="status" aria-live="polite"></div>
+    <details id="advanced" style="display:none">
+      <summary>Claim without this page (advanced) - the exact contract call</summary>
+      <pre id="advanced-text"></pre>
+    </details>
+  </div>
+
+  <h2>SMART-CONTRACT WALLETS (SAFE, MULTISIG)</h2>
+  <div class="panel warn">
+    TPRO held in a smart-contract wallet is a special case: that address is a <strong>contract deployed on Ethereum</strong>
+    (or Polygon), and the same address on Base belongs to nobody. So such rows are marked
+    <strong>"contract wallet - designation needed"</strong> (this page shows the marker when you look the address up).
+    The owners designate a Base address they control by sending one transaction <strong>from the contract wallet on
+    Ethereum</strong> to the published designation address <span id="designation-line"></span>, with the Base address in
+    the transaction data - only the owners can send it, and anyone can check it on Etherscan. Designations made before
+    the final table are in the table; later ones are served from a public reserve during the whole claim window. Ask in
+    the official community channel <span id="cw-link"></span>- and never "migrate" by sending old tokens anywhere:
+    nothing in this process asks you to send tokens.
+  </div>
+
+  <h2>FAQ</h2>
+  <div class="panel faq">
+    <h3>My address is not in the table. Why?</h3>
+    <p>The table is a snapshot of the old token at two pinned blocks (Ethereum and Polygon). An address is missing
+    if it held no TPRO at those blocks: tokens bought or received later, tokens held on an exchange (withdraw to a
+    wallet you control before the snapshot), or tokens in a contract address (see the notice above - the page marks
+    those).</p>
+    <h3>I had TPRO staked, in a vesting contract, or on Polygon.</h3>
+    <p>Staking deposits and unclaimed vesting balances are credited to the address that owns them, and Polygon
+    balances are credited to the same address natively. Everything an address held is merged into one row, claimed
+    once, on Base.</p>
+    <h3>Why the whole row in one transaction?</h3>
+    <p>The contract pays each row exactly once, in full, at 1:1. Nothing to split, nothing to time, no penalty. The
+    amount is fixed by the published table and cannot be changed by anyone, including us.</p>
+    <h3>Can somebody else claim my row?</h3>
+    <p>No. The contract pays a row only to the address itself: the transaction must be sent by that address.</p>
+    <h3>What does it cost?</h3>
+    <p>The Base network fee for one transaction, paid from your own wallet. Nobody sponsors it and nobody is entitled
+    to ask you for anything.</p>
+    <h3>What happens after the closing date?</h3>
+    <p>The claim window is 36 months from launch (the exact moment is in STATUS). After it, claims stop and the
+    unclaimed remainder is burned. A claim must be <strong>mined before</strong> that moment - claim early.</p>
+    <h3>Who holds the keys to the claim contract?</h3>
+    <p>Nobody. The claim contract has no owner, no pause, no upgrade and no rescue function; its table root is
+    immutable. The token has no owner, no mint, no pause and no fees; its supply can only go down.</p>
+    <h3>Can I verify this independently?</h3>
+    <p>Yes. The snapshot tool and the published table are open, and the table root pinned on this page is the same
+    root the claim contract stores. The verification guide is published together with the tool.</p>
+    <h3>The page shows a red "verification failed" banner.</h3>
+    <p>Then this copy of the page or the table cannot be trusted - do not claim from it. Use the official hostname
+    only. Your row itself is safe: it is in the contract.</p>
+    <h3>Something in my row looks wrong.</h3>
+    <p>Report it in the official community channel with your address, before the final table is published. After
+    launch the root is immutable; corrections follow a published rule <span id="corrections-link"></span>.</p>
+  </div>
+
+  <div class="foot" id="foot">
+    <span id="foot-links"></span>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script>
+(() => {   // PRIVATE SCOPE (2026-09-14): every function and constant of this page lives in this closure. Browser extensions run
+           // scripts in the page's world and can (re)define globals; a wallet extension's bundle exposed its own global
+           // `keccak256` (ethereumjs-util: throws Error('invalid type') for a Uint8Array) after this script ran, replacing
+           // the page's hash function whenever it loaded later - a race that broke lookups on a holder's browser. Closure
+           // bindings cannot be replaced by name from outside.
+"use strict";
+/* TPRO claim page v3 - ZERO external dependencies by policy.
+   Everything below is reviewable on this page + config.js: raw JSON-RPC,
+   hand-encoded calls, BigInt math, an inline keccak256 (self-tested at boot).
+   Model: a published snapshot table (address, amount) + merkle root; an
+   immutable distributor on Base pays each row once to the address itself.
+   Fail-closed discipline: the CLAIM button arms only after the FULL
+   verification pass (config root == index.json root == on-chain root, token
+   and genesis cross-checked, the served table files checked against the
+   pinned SHA256SUMS, the row's proof verified locally). Any failure disables
+   the action - it never degrades it. Round 4 (2026-09-06) added: RPC failover
+   + two-provider root confirmation, integrity-anchored "not in the table",
+   the contract-wallet marker, the wallet-prompt description, EIP-55 checks,
+   pre-flight simulation with revert decoding, stacked banners, exact wei.
+   External review 2026-09-08 fix round (2026-09-09): two verification flags
+   (table / chain) published only after every check, deadlines + size caps on
+   every request, concurrent root quorum, the manual call before any chain
+   read, non-blocking code lookup, the receipt bound to a Claimed event,
+   contract-wallet markers keyed by chain. */
+
+const C = window.CLAIM_CONFIG;
+const $ = (id) => document.getElementById(id);
+
+// -- selectors (verify with `cast sig`) ---------------------------------------
+const SEL = {
+  claim: "0x3d13f874",         // claim(address,uint256,bytes32[])
+  isClaimed: "0x8cc08025",     // isClaimed(address)
+  merkleRoot: "0x2eb4a7ab",    // merkleRoot()
+  token: "0xfc0c546a",         // token()
+  genesis: "0xa7f0b3de",       // genesis()
+  sunsetTime: "0x6c63c400",    // sunsetTime()
+  totalClaimed: "0xd54ad2a1",  // totalClaimed()
+  sunsetBurned: "0x99f973dc",  // sunsetBurned()
+};
+// custom errors of the distributor (`cast sig "NotYourRow()"` etc.) -> human messages
+const ERRORS = {
+  "0x6746ca73": "this row can only be claimed by its own address",
+  "0xf0f25a33": "the claim window has closed",
+  "0x646cf558": "this row is already claimed",
+  "0x09bde339": "the served proof is not valid for this row - the table copy is wrong, do not retry from this page",
+  "0x7c653910": "sunset is not open yet",
+};
+
+// -- tiny helpers ----------------------------------------------------------------
+const pad32 = (hexNo0x) => hexNo0x.padStart(64, "0");
+const addrWord = (addr) => pad32(addr.toLowerCase().replace("0x", ""));
+const uintWord = (big) => pad32(BigInt(big).toString(16));
+const short = (a) => a ? a.slice(0, 6) + "..." + a.slice(-4) : "-";
+const nowTs = () => BigInt(Math.floor(Date.now() / 1000));
+
+// XSS containment: RPC responses, fetched table files and wallet return values
+// are UNTRUSTED. Nothing remote reaches the DOM unless it matches these shapes
+// exactly; user-supplied values render via textContent, never markup.
+const VALID_HASH = /^0x[0-9a-f]{64}$/i;   // tx hashes, bytes32, roots
+const VALID_ADDR = /^0x[0-9a-f]{40}$/i;   // addresses
+const VALID_HEX = /^0x[0-9a-f]*$/i;       // quantities / data words
+const VALID_DEC = /^(0|[1-9][0-9]*)$/;    // decimal wei strings in the table
+const VALID_FILE = /^[A-Za-z0-9._-]+$/;   // file names from index.json
+const VALID_SHA = /^[0-9a-f]{64}$/i;
+const ZERO_ADDR = /^0x0{40}$/i;
+const ZERO_ROOT = /^0x0{64}$/i;
+
+function fmtTPRO(wei, digits = 2) {
+  const neg = wei < 0n; if (neg) wei = -wei;
+  const whole = wei / 10n ** 18n;
+  const frac = (wei % 10n ** 18n).toString().padStart(18, "0").slice(0, digits);
+  return (neg ? "-" : "") + whole.toLocaleString("en-US") + (digits ? "." + frac : "");
+}
+function fmtExact(wei) {
+  const whole = wei / 10n ** 18n;
+  const frac = (wei % 10n ** 18n).toString().padStart(18, "0").replace(/0+$/, "");
+  return whole.toString() + (frac ? "." + frac : "") + " TPRO = " + wei.toString() + " wei";
+}
+const fmtDateTime = (ts) => {
+  const d = new Date(Number(ts) * 1000);
+  return d.toISOString().replace("T", " ").replace(".000Z", " UTC") + " (" + d.toLocaleString(undefined, { timeZoneName: "short" }) + ")";
+};
+
+function toast(msg, ms = 4000) {
+  const el = $("toast"); el.textContent = msg; el.style.display = "block";
+  clearTimeout(el._t); el._t = setTimeout(() => el.style.display = "none", ms);
+}
+
+// -- keccak256 (Keccak-f[1600], rate 136 bytes, pad 0x01..0x80) ------------------
+// Inline so the page can verify a merkle proof without loading any library.
+const KECCAK_RC = [0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
+  0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
+  0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an,
+  0x000000008000808bn, 0x800000000000008bn, 0x8000000000008089n, 0x8000000000008003n,
+  0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an,
+  0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n];
+const KECCAK_ROT = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
+const M64 = (1n << 64n) - 1n;
+const rotl64 = (v, n) => (n === 0 ? v : (((v << BigInt(n)) | (v >> BigInt(64 - n))) & M64));
+function keccakF(A) {
+  for (let r = 0; r < 24; r++) {
+    const Cc = [], D = [];
+    for (let x = 0; x < 5; x++) Cc[x] = A[x] ^ A[x + 5] ^ A[x + 10] ^ A[x + 15] ^ A[x + 20];
+    for (let x = 0; x < 5; x++) D[x] = Cc[(x + 4) % 5] ^ rotl64(Cc[(x + 1) % 5], 1);
+    for (let i = 0; i < 25; i++) A[i] ^= D[i % 5];
+    const B = new Array(25);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) {
+      B[y + 5 * ((2 * x + 3 * y) % 5)] = rotl64(A[x + 5 * y], KECCAK_ROT[x + 5 * y]);
+    }
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) {
+      A[x + 5 * y] = B[x + 5 * y] ^ ((~B[((x + 1) % 5) + 5 * y] & M64) & B[((x + 2) % 5) + 5 * y]);
+    }
+    A[0] ^= KECCAK_RC[r];
+  }
+}
+function keccak256(bytes) {
+  const rate = 136;
+  const padded = new Uint8Array(Math.floor(bytes.length / rate) * rate + rate);
+  padded.set(bytes);
+  padded[bytes.length] ^= 0x01;
+  padded[padded.length - 1] ^= 0x80;
+  const A = new Array(25).fill(0n);
+  for (let off = 0; off < padded.length; off += rate) {
+    for (let i = 0; i < 17; i++) {
+      let lane = 0n;
+      for (let b = 7; b >= 0; b--) lane = (lane << 8n) | BigInt(padded[off + 8 * i + b]);
+      A[i] ^= lane;
+    }
+    keccakF(A);
+  }
+  let out = "";
+  for (let i = 0; i < 4; i++) {
+    let lane = A[i];
+    for (let b = 0; b < 8; b++) { out += Number(lane & 0xffn).toString(16).padStart(2, "0"); lane >>= 8n; }
+  }
+  return "0x" + out;
+}
+const hexToBytes = (h) => Uint8Array.from(h.replace(/^0x/, "").match(/../g) || [], (x) => parseInt(x, 16));
+// No dependency on TextEncoder / TextDecoder (a browser extension can replace them with a broken polyfill - seen
+// 2026-09-14 as "invalid type" on a holder's browser): addresses are ASCII, the table files are UTF-8 JSON/text.
+const asciiBytes = (str) => Uint8Array.from(str, (c) => c.charCodeAt(0) & 0xff);
+function decodeText(bytes) {
+  const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  try { if (typeof TextDecoder === "function") { const t = new TextDecoder("utf-8", { fatal: true }).decode(b); if (typeof t === "string") return t; } } catch (e) { /* fall back below */ }
+  let out = "", i = 0;
+  while (i < b.length) {
+    let c = b[i++];
+    if (c < 0x80) { out += String.fromCharCode(c); continue; }
+    const n = c >= 0xf0 ? 3 : c >= 0xe0 ? 2 : 1;
+    c &= (0x3f >> n);
+    for (let k = 0; k < n; k++) c = (c << 6) | (b[i++] & 0x3f);
+    out += String.fromCodePoint(c);
+  }
+  return out;
+}
+// OZ StandardMerkleTree ["address","uint256"]: leaf = keccak256(keccak256(abi.encode(addr, amount)))
+const leafOf = (addr, amount) => keccak256(hexToBytes(keccak256(hexToBytes(addrWord(addr) + uintWord(amount)))));
+// sorted-pair parent (lowercase hex compares like the byte arrays do)
+const hashPair = (a, b) => keccak256(hexToBytes(a < b ? a + b.slice(2) : b + a.slice(2)));
+function proofRoot(leaf, proof) { let h = leaf; for (const p of proof) h = hashPair(h, p); return h; }
+// EIP-55 checksum (round 4, R3-9): a mixed-case address with a wrong checksum is a typo, not a lookup.
+function toChecksum(addr) {
+  const a = addr.toLowerCase().replace(/^0x/, "");
+  const h = keccak256(asciiBytes(a)).slice(2);
+  let out = "0x";
+  for (let i = 0; i < 40; i++) out += parseInt(h[i], 16) >= 8 ? a[i].toUpperCase() : a[i];
+  return out;
+}
+async function sha256Hex(bytes) {
+  if (!(globalThis.crypto && crypto.subtle)) return null;   // insecure context: cannot hash - say so, never guess
+  const d = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function keccakSelfTest() {
+  // Vectors computed with `cast keccak`. A hash that fails here could make a
+  // forged proof "verify" - so a failure kills the page (fail-closed).
+  const V = [
+    [asciiBytes(""), "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"],
+    [asciiBytes("abc"), "0x4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45"],
+    [new Uint8Array(136), "0x3a5912a7c5faa06ee4fe906253e339467a9ce87d533c65be3c15cb231cdb25f9"], // exactly one block
+    [new Uint8Array(200), "0xe1bb54e1bc3af48d01e5dbfc81015c98152a574f6428c6948aa4837c9c0baad9"], // two blocks
+    [hexToBytes(addrWord("0x0000000000000000000000000000000000000001") + uintWord(1)),
+      "0xcc69885fda6bcc1a4ace058b4a62bf5e179ea78fd58a1ccd71c22cc9b688792f"],                  // abi.encode(addr 1, 1)
+  ];
+  for (const [input, want] of V) if (keccak256(input) !== want) return false;
+  if (leafOf("0x0000000000000000000000000000000000000001", 1n)
+    !== "0x66b32740ad8041bcc3b909c72d7e1afe60094ec55e3cde329b4b3a28501d826c") return false;
+  // EIP-55 reference vector (EIP-55 spec)
+  return toChecksum("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed") === "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
+}
+
+// -- raw JSON-RPC with failover + two-provider root confirmation (round 4, R3-4) ----
+// https only - plus plain http on the loopback host for local testing (never reachable from a deployed page)
+const RPC_OK = /^(https:\/\/[^\s"'<>]+|http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/[^\s"'<>]*)$/;
+const RPCS = (Array.isArray(C.base.rpc) ? C.base.rpc : [C.base.rpc]).filter((u) => typeof u === "string" && RPC_OK.test(u));
+let rpcCursor = 0;                       // REFRESH rotates the starting endpoint
+const chainIdOk = new Map();             // url -> true once eth_chainId matched
+// Deadlines and bounds (external review 2026-09-08, S06): no request may hang forever. A stalled provider or
+// table host must never block the failover to a healthy one, and never leave the page "loading" indefinitely.
+const RPC_TIMEOUT_MS = 10_000;           // one JSON-RPC request, headers AND body (the same signal covers both)
+const TABLE_TIMEOUT_MS = 20_000;         // one table file, headers AND body
+const QUORUM_DEADLINE_MS = 12_000;       // the concurrent root reads, in total
+const QUORUM_GRACE_MS = 3_000;           // after the first root answer: how long a second provider may still take
+const RPC_MAX_BYTES = 1 << 20;           // bounded response sizes: a JSON-RPC answer (1 MiB) ...
+const TABLE_MAX_BYTES = 8 << 20;         // ... and a table file (8 MiB; the largest real one is a few hundred KB)
+// Endpoint health: an endpoint that failed or stalled since it last answered is tried LAST (never dropped -
+// REFRESH still rotates through all of them). A stalled first provider therefore costs one deadline, once.
+const health = new Map();                // url -> {good, bad} timestamps
+const markGood = (url) => { health.set(url, { ...(health.get(url) || {}), good: Date.now() }); };
+const markBad = (url) => { health.set(url, { ...(health.get(url) || {}), bad: Date.now() }); };
+const isSuspect = (url) => { const h = health.get(url); return !!(h && h.bad && (!h.good || h.bad > h.good)); };
+function orderedRpcs() {
+  const rot = RPCS.map((_, i) => RPCS[(rpcCursor + i) % RPCS.length]);
+  return rot.filter((u) => !isSuspect(u)).concat(rot.filter((u) => isSuspect(u)));
+}
+// read a response body with a hard size cap (the abort signal bounds the time, this bounds the bytes)
+async function readBounded(resp, max) {
+  const reader = resp.body && typeof resp.body.getReader === "function" ? resp.body.getReader() : null;
+  if (!reader) {
+    const b = new Uint8Array(await resp.arrayBuffer());
+    if (b.length > max) throw new Error("response too large");
+    return b;
+  }
+  const chunks = []; let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > max) { try { await reader.cancel(); } catch (e) { /* already gone */ } throw new Error("response too large"); }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total); let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
+class RpcError extends Error { constructor(msg, data) { super(msg); this.data = data; } }
+// one POST to one endpoint: deadline on headers + body, bounded body, health bookkeeping (transport only -
+// a JSON-RPC error object is an ANSWER from a healthy endpoint, e.g. a revert, and is returned to the caller)
+async function rpcPost(url, payload) {
+  const signal = AbortSignal.timeout(RPC_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal });
+    if (!resp.ok) throw new Error("rpc http " + resp.status);
+    const body = JSON.parse(decodeText(await readBounded(resp, RPC_MAX_BYTES)));
+    markGood(url);
+    return body;
+  } catch (e) {
+    markBad(url);
+    if (e && e.name === "TimeoutError") throw new Error("rpc timeout (" + (RPC_TIMEOUT_MS / 1000) + " s)");
+    throw e;
+  }
+}
+async function rpcOn(url, method, params) {
+  const body = await rpcPost(url, { jsonrpc: "2.0", id: 1, method, params });
+  if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("malformed rpc answer");
+  if (body.error) throw new RpcError((body.error && body.error.message) || "rpc error", body.error && body.error.data);
+  return body.result;
+}
+async function ensureChainId(url) {
+  if (chainIdOk.get(url)) return;
+  const id = await rpcOn(url, "eth_chainId", []);
+  if (!VALID_HEX.test(id) || BigInt(id) !== BigInt(C.base.chainId)) throw new Error("the Base RPC serves the wrong chain");
+  chainIdOk.set(url, true);
+}
+// try every configured endpoint in order (transport/node errors fail over; a revert does not)
+async function rpcAny(method, params) {
+  let err = new Error("no RPC configured");
+  for (const url of orderedRpcs()) {
+    try { await ensureChainId(url); return await rpcOn(url, method, params); }
+    catch (e) { err = e; if (e instanceof RpcError && e.data) throw e; }
+  }
+  throw err;
+}
+const ethCallAny = (to, data) => rpcAny("eth_call", [{ to, data }, "latest"]);
+const asWord = (r) => { if (!VALID_HEX.test(r) || r.length !== 66) throw new Error("malformed call result"); return r.toLowerCase(); };
+const callWord = async (to, data) => asWord(await ethCallAny(to, data));
+const callUint = async (to, data) => BigInt(await callWord(to, data));
+// the contract's ROOT is an immutable: two providers must agree when two are reachable. The providers are
+// asked CONCURRENTLY under one deadline (S06): a stalled endpoint can neither block a healthy one nor delay
+// the answer beyond QUORUM_DEADLINE_MS; after the first answer a second one gets QUORUM_GRACE_MS more.
+async function readRootQuorum(distributor) {
+  const urls = orderedRpcs();
+  const answers = [], errors = [];
+  const readOne = async (url) => {
+    await ensureChainId(url);
+    return asWord(await rpcOn(url, "eth_call", [{ to: distributor, data: SEL.merkleRoot }, "latest"]));
+  };
+  await new Promise((resolve) => {
+    let pending = urls.length, grace = null;
+    const deadline = setTimeout(resolve, QUORUM_DEADLINE_MS);
+    const finish = () => { clearTimeout(deadline); if (grace) clearTimeout(grace); resolve(); };
+    if (!urls.length) finish();
+    for (const url of urls) {
+      readOne(url).then(
+        (root) => { answers.push({ url, root }); if (answers.length === 1 && pending > 1) grace = setTimeout(finish, QUORUM_GRACE_MS); },
+        (e) => { errors.push(e); },
+      ).finally(() => { pending -= 1; if (answers.length >= 2 || pending === 0) finish(); });
+    }
+  });
+  for (const url of urls) if (!answers.some((a) => a.url === url)) markBad(url);   // no answer in time: tried last from now on
+  if (!answers.length) throw errors[0] || new Error("no RPC answered the root read within " + (QUORUM_DEADLINE_MS / 1000) + " s");
+  if (answers.length >= 2 && answers[0].root !== answers[1].root) return { disagree: true };
+  return { root: answers[0].root, confirmed: answers.length >= 2 };
+}
+// one JSON-RPC batch on the first healthy endpoint; sequential fallback if batches are unsupported
+async function readWordsAny(distributor, selectors) {
+  let err = new Error("no RPC configured");
+  for (const url of orderedRpcs()) {
+    try {
+      await ensureChainId(url);
+      try {
+        const arr = await rpcPost(url, selectors.map((s, k) => ({ jsonrpc: "2.0", id: k + 1, method: "eth_call", params: [{ to: distributor, data: s }, "latest"] })));
+        if (!Array.isArray(arr) || arr.length !== selectors.length) throw new Error("batch unsupported");
+        const out = new Array(selectors.length);
+        for (const r of arr) {
+          const k = Number(r && r.id) - 1;
+          if (!(k >= 0 && k < selectors.length) || r.error) throw new Error((r && r.error && r.error.message) || "bad batch answer");
+          out[k] = asWord(r.result);
+        }
+        return out;
+      } catch (e) {
+        if (/^rpc (http|timeout)/.test(String(e.message))) throw e;   // transport: next endpoint, not a sequential retry here
+        const out = [];
+        for (const s of selectors) out.push(asWord(await rpcOn(url, "eth_call", [{ to: distributor, data: s }, "latest"])));
+        return out;
+      }
+    } catch (e) { err = e; }
+  }
+  throw err;
+}
+
+async function fetchTableRaw(relative) {
+  const url = tableUrl() + relative;
+  const signal = AbortSignal.timeout(TABLE_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, { cache: "no-store", signal });
+    if (!resp.ok) throw new Error("table file " + relative + " -> http " + resp.status);
+    return await readBounded(resp, TABLE_MAX_BYTES);
+  } catch (e) {
+    if (e && e.name === "TimeoutError") throw new Error("table file " + relative + " -> timeout (" + (TABLE_TIMEOUT_MS / 1000) + " s)");
+    throw e;
+  }
+}
+const decodeJson = (bytes) => JSON.parse(decodeText(bytes));
+const tableUrl = () => (C.table.url.endsWith("/") ? C.table.url : C.table.url + "/");
+// an integrity failure (a mismatch, a malformed published file) is a KILL; a transport failure is a retry
+const tamper = (msg) => Object.assign(new Error(msg), { tampered: true });
+
+// -- page state -----------------------------------------------------------------------
+let account = null;          // connected wallet address (lowercase)
+let viewAddr = null;         // address being viewed (connected or looked up), lowercase
+let killed = false;
+// Two SEPARATE verification flags (external review 2026-09-08, S05). Nothing below is published half-way:
+let tableVerified = false;   // true ONLY after EVERY table check passed (index shape, pins, SHA256SUMS anchor, index + CSV lines)
+let chainVerified = false;   // true ONLY after the contract pass (root quorum == pinned == table, token, genesis); preview: lookups allowed
+let tableIndex = null;       // validated index.json - set together with tableVerified, never before
+let pinnedRoot = null;       // config root, else index.json root (with a warning; never in LIVE) - set with tableVerified
+let sums = null;             // Map(relpath -> sha256) from the pinned SHA256SUMS, or null when unpinned - set with tableVerified
+let chain = null;            // {root, token, genesis, sunsetTime, totalClaimed, sunsetBurned, confirmed}
+let row = null;              // {address, amount, proof, claimed: true | false | null (= unknown, chain read failed)}
+let pollMs = 60_000;
+const previewMode = () => ZERO_ADDR.test(C.base.distributor);
+const pins = {
+  root: (C.table.merkleRoot || "").toLowerCase(),
+  csv: (C.table.csvSha256 || "").toLowerCase(),
+  sums: (C.table.sha256sumsSha256 || "").toLowerCase(),
+};
+pins.root = VALID_HASH.test(pins.root) && !ZERO_ROOT.test(pins.root) ? pins.root : "";
+pins.csv = VALID_SHA.test(pins.csv) ? pins.csv : "";
+pins.sums = VALID_SHA.test(pins.sums) ? pins.sums : "";
+
+// -- banners: one slot per KIND, stacked, never overwritten (round 4, R3-8) --------------
+function banner(key, text, cls) {
+  const wrap = $("banners");
+  let el = document.getElementById("banner-" + key);
+  if (!el) {
+    el = document.createElement("div"); el.id = "banner-" + key;
+    if (key === "kill") wrap.prepend(el); else wrap.append(el);
+  }
+  el.className = "banner" + (cls ? " " + cls : "");
+  el.textContent = text;
+  el.style.display = "block";
+}
+const softBanner = (text) => banner("note", text, "note");
+function disableActions(all) {
+  document.querySelectorAll("button").forEach((x) => {
+    if (all || (x.id !== "btn-lookup" && x.id !== "btn-refresh")) x.disabled = true;
+  });
+  if (all) $("addr-input").disabled = true;
+}
+function kill(reason) {
+  killed = true; tableVerified = false; chainVerified = false;
+  banner("kill", "VERIFICATION FAILED ON THIS PAGE: " + reason + " - do NOT claim from this copy. Use the official page only.", "killed");
+  $("verify-line").innerHTML = '<span class="bad">Verification failed - see the banner. This page is locked; reload it from the official host.</span>';
+  disableActions(true);
+}
+// a status line built from our own strings + an error message (rendered as TEXT, never markup)
+function statusLine(cls, text) {
+  const line = $("verify-line"); line.textContent = "";
+  const s = document.createElement("span"); s.className = cls; s.textContent = text;
+  line.append(s);
+}
+
+// -- the published table -------------------------------------------------------------
+function validateIndex(j) {
+  if (!j || typeof j !== "object") throw tamper("index.json is not an object");
+  if (j.version !== 1) throw tamper("unsupported table version");
+  if (!Array.isArray(j.leafEncoding) || j.leafEncoding.length !== 2
+      || j.leafEncoding[0] !== "address" || j.leafEncoding[1] !== "uint256") throw tamper("unexpected leaf encoding");
+  if (typeof j.merkleRoot !== "string" || !VALID_HASH.test(j.merkleRoot) || ZERO_ROOT.test(j.merkleRoot)) throw tamper("index.json root malformed");
+  if (typeof j.totalWei !== "string" || !VALID_DEC.test(j.totalWei)) throw tamper("index.json total malformed");
+  for (const k of ["rows", "ethBlock", "polygonBlock", "shards"]) {
+    if (!Number.isInteger(j[k]) || j[k] < 0) throw tamper("index.json " + k + " malformed");
+  }
+  if (j.shards !== 256) throw tamper("unexpected shard count");
+  if (typeof j.csv !== "string" || !VALID_FILE.test(j.csv)) throw tamper("index.json csv name malformed");
+  if (typeof j.csvSha256 !== "string" || !VALID_SHA.test(j.csvSha256)) throw tamper("index.json sha256 malformed");
+  const cw = (typeof j.contractWallets === "string" && VALID_FILE.test(j.contractWallets)) ? j.contractWallets : null;
+  const bh = (k) => (typeof j[k] === "string" && VALID_HASH.test(j[k])) ? j[k].toLowerCase() : null;
+  return {
+    root: j.merkleRoot.toLowerCase(), totalWei: BigInt(j.totalWei), rows: j.rows,
+    ethBlock: j.ethBlock, polygonBlock: j.polygonBlock, csv: j.csv, csvSha256: j.csvSha256.toLowerCase(),
+    contractWallets: cw, ethBlockHash: bh("ethBlockHash"), polygonBlockHash: bh("polygonBlockHash"),
+  };
+}
+function parseSums(text) {
+  const m = new Map();
+  for (const line of text.split("\n")) {
+    const mm = /^([0-9a-f]{64})\s+\*?(.+)$/i.exec(line.trim());
+    if (mm) m.set(mm[2].trim(), mm[1].toLowerCase());
+  }
+  return m;
+}
+
+// Loads and verifies the published table. Works on LOCALS: tableIndex / pinnedRoot / sums / tableVerified are
+// published together, at the very end, only after EVERY check passed (S05). A transport failure (a table file
+// unreachable, a timeout) leaves the page UNVERIFIED and is retried; a mismatch or a malformed file KILLS.
+async function loadTable() {
+  tableVerified = false;
+  const indexBytes = await fetchTableRaw("index.json");
+  let parsed;
+  try { parsed = decodeJson(indexBytes); } catch (e) { throw tamper("index.json is not valid JSON"); }
+  const idx = validateIndex(parsed);
+  if (C.LIVE && !(pins.root && pins.csv && pins.sums)) {
+    kill("this official deployment is missing a pinned root or checksum (configuration error)"); return;
+  }
+  let root;
+  if (pins.root) {
+    if (pins.root !== idx.root) { kill("the table served here does not match the root pinned in this page"); return; }
+    root = pins.root;
+  } else {
+    root = idx.root;
+    softBanner("NOTE: the merkle root is not pinned in this test deployment - the table's own root is used. On the official page the root and the checksums are pinned and cross-checked with the contract.");
+  }
+  if (pins.csv && pins.csv !== idx.csvSha256) { kill("the table's CSV checksum does not match the value pinned in this page"); return; }
+  if (C.table.ethBlock && C.table.ethBlock !== idx.ethBlock) { kill("the table's Ethereum block does not match this page"); return; }
+  if (C.table.polygonBlock && C.table.polygonBlock !== idx.polygonBlock) { kill("the table's Polygon block does not match this page"); return; }
+  // Integrity anchor for the SERVED files (round 4, R3-3): SHA256SUMS must hash to the pin; then index.json
+  // and every shard the page reads must hash to their SHA256SUMS lines. With a pinned checksum file NOTHING
+  // is published until that file is loaded and verified - a withheld manifest = an unverified page (S05).
+  let sumsMap = null, integrity;
+  if (pins.sums) {
+    const sumsBytes = await fetchTableRaw("SHA256SUMS");
+    const got = await sha256Hex(sumsBytes);
+    if (got === null) { kill("this browser cannot compute SHA-256 (insecure context) - open the page over https"); return; }
+    if (got !== pins.sums) { kill("the SHA256SUMS file served here does not match the value pinned in this page"); return; }
+    sumsMap = parseSums(decodeText(sumsBytes));
+    const idxHash = await sha256Hex(indexBytes);
+    if (sumsMap.get("index.json") !== idxHash) { kill("the index.json served here is not the published one (SHA256SUMS mismatch)"); return; }
+    if (sumsMap.get(idx.csv) !== idx.csvSha256) { kill("the CSV checksum in SHA256SUMS does not match index.json"); return; }
+    integrity = "served table verified against the published checksums";
+  } else {
+    integrity = "table files are NOT integrity-pinned in this test deployment";
+  }
+  // every check passed: publish the table state atomically - nothing above this line was visible to lookups
+  tableIndex = idx; pinnedRoot = root; sums = sumsMap; tableVerified = true;
+  $("s-rows").textContent = tableIndex.rows.toLocaleString("en-US");
+  $("s-total").textContent = fmtTPRO(tableIndex.totalWei, 0) + " TPRO";
+  $("blocks-line").textContent = "Snapshot blocks: Ethereum " + tableIndex.ethBlock.toLocaleString("en-US")
+    + " / Polygon " + tableIndex.polygonBlock.toLocaleString("en-US") + " - table root " + short(pinnedRoot);
+  $("integrity-line").textContent = integrity;
+  renderFootLinks();
+}
+
+// -- the contract ------------------------------------------------------------------
+function renderAddresses() {
+  if (previewMode()) {
+    $("s-dist").textContent = "not deployed yet (preview)";
+    $("s-token").textContent = "not deployed yet (preview)";
+    return;
+  }
+  $("s-dist").textContent = toChecksum(C.base.distributor);
+  $("s-token").textContent = VALID_ADDR.test(C.base.token) ? toChecksum(C.base.token) : "-";
+}
+async function loadChain() {
+  if (killed || !tableVerified || !tableIndex) return;
+  chainVerified = false;
+  renderAddresses();
+  if (previewMode()) {
+    $("s-claimed").textContent = "not yet - preview";
+    $("s-sunset").textContent = "36 months after launch";
+    $("pct").textContent = "preview";
+    $("verify-line").innerHTML = '<span class="pend">PREVIEW: the table is published for review. Lookups and proof checks work; claims open at launch. This page never asks you to connect a wallet before launch.</span>';
+    $("stats-updated").textContent = "";
+    chainVerified = true; // for lookups only - claims stay off (no distributor)
+    return;
+  }
+  const { distributor } = C.base;
+  const q = await readRootQuorum(distributor);
+  if (q.disagree) { kill("two RPC providers disagree on the contract's merkle root"); return; }
+  const root = q.root;
+  if (root !== pinnedRoot || root !== tableIndex.root) {
+    kill("the merkle root in the contract does not match the table on this page"); return;
+  }
+  const [tokenW, genesisW, sunsetW, claimedW, burnedW] = await readWordsAny(distributor,
+    [SEL.token, SEL.genesis, SEL.sunsetTime, SEL.totalClaimed, SEL.sunsetBurned]);
+  const token = "0x" + tokenW.slice(-40);
+  const genesis = BigInt(genesisW), sunsetTime = BigInt(sunsetW), totalClaimed = BigInt(claimedW), sunsetBurned = BigInt(burnedW);
+  if (token !== C.base.token.toLowerCase()) { kill("the TPRO token address on this page does not match the contract"); return; }
+  if (genesis !== tableIndex.totalWei) { kill("the contract's genesis does not equal the table total"); return; }
+  chain = { root, token, genesis, sunsetTime, totalClaimed, sunsetBurned, confirmed: q.confirmed };
+
+  const pctBps = genesis ? (totalClaimed * 10000n) / genesis : 0n;
+  $("pct").textContent = (Number(pctBps) / 100).toFixed(2) + "% claimed";
+  $("pctbar").style.width = Math.max(0.5, Number(pctBps) / 100) + "%";
+  $("pctbar-wrap").setAttribute("aria-valuenow", String(Number(pctBps) / 100));
+  $("s-claimed").textContent = fmtTPRO(totalClaimed, 0) + " TPRO";
+  const now = nowTs();
+  if (now >= sunsetTime) {
+    $("s-sunset").textContent = "CLOSED " + fmtDateTime(sunsetTime);
+    banner("sunset", "THE CLAIM WINDOW HAS CLOSED (" + fmtDateTime(sunsetTime) + "). Unclaimed rows are burned"
+      + (sunsetBurned > 0n ? " - " + fmtTPRO(sunsetBurned, 0) + " TPRO burned so far." : "."));
+  } else {
+    $("s-sunset").textContent = fmtDateTime(sunsetTime);
+    if (sunsetTime - now < 30n * 86_400n) banner("sunset", "CLAIMS CLOSE " + fmtDateTime(sunsetTime) + " - a claim must be MINED before that moment. Claim now.");
+  }
+  $("stats-updated").textContent = "(live from Base, " + new Date().toLocaleTimeString() + ")";
+  chainVerified = true;
+  pollMs = 300_000;
+  $("verify-line").innerHTML = '<span class="ok">✓ verified live: contract root == pinned root == table root; token and total cross-checked on Base'
+    + (q.confirmed ? " (two RPC providers agree)" : " (one RPC provider answered - second confirmation pending)") + '</span>';
+}
+
+// -- wallet ----------------------------------------------------------------------
+function showViewedAddress(label, addr) {
+  const holder = $("acct");
+  holder.innerHTML = `${label}: <span class="ok"></span>`;
+  let shown = addr;
+  try { shown = toChecksum(addr); } catch (e) { console.error("checksum display failed:", e); }
+  holder.querySelector("span").textContent = shown;
+}
+async function connect() {
+  if (previewMode()) { toast("Before launch this page never connects a wallet - paste your address instead"); return; }
+  if (!window.ethereum) { toast("No wallet detected - use the read-only lookup, or on a phone open this page inside your wallet's browser"); return; }
+  const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+  const a = (accounts && accounts[0]) || "";
+  if (!VALID_ADDR.test(a)) { toast("Wallet returned an invalid address"); return; }
+  account = a.toLowerCase(); viewAddr = account;
+  showViewedAddress("Connected", account);
+  await loadRow();
+}
+function clearRow() {
+  row = null;
+  $("row-panel").style.display = "none";
+  $("wallet-show").style.display = "none";
+  $("advanced").style.display = "none";
+}
+async function lookup() {
+  const a = $("addr-input").value.trim();
+  if (!VALID_ADDR.test(a)) { toast("That is not a 0x address"); clearRow(); return; }
+  const body = a.slice(2);
+  if (/[a-f]/.test(body) && /[A-F]/.test(body)) {
+    // a mixed-case address with a wrong EIP-55 checksum is a typo - but a failing checksum ROUTINE (an extension
+    // tampering with globals, an exotic engine) must not block a read-only lookup: log it and continue lowercase
+    let cs = null;
+    try { cs = toChecksum(a); } catch (e) { console.error("checksum routine failed - lookup continues lowercase:", e); }
+    if (cs && a !== cs) {
+      toast("Checksum mismatch - this mixed-case address has a typo; copy it again from your wallet"); clearRow(); return;
+    }
+  }
+  viewAddr = a.toLowerCase();
+  showViewedAddress("Viewing (read-only)", viewAddr);
+  await loadRow();
+}
+async function switchChain(ch) {
+  try {
+    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: ch.chainIdHex }] });
+  } catch (e) {
+    if (e && e.code === 4902 && ch.addChainParams) {
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [ch.addChainParams] });
+    } else { throw e; }
+  }
+  const active = await window.ethereum.request({ method: "eth_chainId", params: [] });
+  if (!VALID_HEX.test(active) || BigInt(active) !== BigInt(ch.chainId)) {
+    throw new Error("wallet is not on " + ch.name + " - switch networks and retry");
+  }
+}
+
+// -- the looked-up row ----------------------------------------------------------------
+function setRow(amountText, statusHtml, proofHtml, noteText, weiText) {
+  $("row-panel").style.display = "block";
+  $("r-amount").textContent = amountText;
+  $("r-wei").textContent = weiText || "";
+  $("r-status").innerHTML = statusHtml;   // static markup only - never remote strings
+  $("r-proof").innerHTML = proofHtml;     // static markup only
+  $("r-note").textContent = noteText || "";
+}
+// a served table file must hash to its SHA256SUMS line; no table read before the table is verified, and with a
+// pinned checksum file that is not loaded EVERY read fails (S05) - "hash only when sums exist" is gone
+async function checkedTableFile(relative) {
+  if (!tableVerified || !tableIndex) throw new Error("the published table is not verified on this page yet");
+  if (pins.sums && !sums) throw new Error("the pinned SHA256SUMS is not loaded - table reads are refused");
+  const bytes = await fetchTableRaw(relative);
+  if (sums) {
+    const want = sums.get(relative);
+    const got = await sha256Hex(bytes);
+    if (!want) throw tamper("file " + relative + " is not listed in the published SHA256SUMS");
+    if (got !== want) throw tamper("the served " + relative + " differs from the published one");
+  }
+  return decodeJson(bytes);
+}
+// contract-wallets.json is keyed "<chain>:<0xlower>" (S08): the chain comes from the KEY, never from the entry alone
+function renderContractWalletMarker(chainKey, entry) {
+  const chainName = chainKey === "polygon" ? "Polygon" : "Ethereum";
+  const box = document.createElement("div");
+  box.className = "panel warn"; box.style.margin = "10px 0 0";
+  const title = document.createElement("strong");
+  const readdr = /^re-addressed/i.test(entry.status || "");
+  title.textContent = "CONTRACT WALLET ON " + chainName.toUpperCase() + (readdr ? " - RE-ADDRESSED" : " - DESIGNATION NEEDED");
+  box.append(title, document.createElement("br"));
+  const bal = VALID_DEC.test(entry.balance_wei || "") ? fmtTPRO(BigInt(entry.balance_wei)) : "?";
+  box.append("This address is a contract on " + chainName + " holding " + bal
+    + " TPRO at the snapshot" + (entry.contract_name ? " (" + String(entry.contract_name).slice(0, 40) + ")" : "") + ". ");
+  if (readdr) {
+    const m = /0x[0-9a-fA-F]{40}/.exec(String(entry.status).replace(/^re-addressed\s*->\s*/i, ""));
+    box.append("Its row is in the table under the designated Base address" + (m ? ": " : "."));
+    if (m) { const c = document.createElement("code"); c.textContent = toChecksum(m[0]); box.append(c, " - look that address up."); }
+  } else {
+    box.append("Its owners must send the designation transaction (from this contract, on " + chainName + ") to the designation address");
+    if (C.designation && VALID_ADDR.test(C.designation.address || "") && !ZERO_ADDR.test(C.designation.address)) {
+      const c = document.createElement("code"); c.textContent = toChecksum(C.designation.address); box.append(" ", c);
+    } else { box.append(" (published in the official announcement)"); }
+    box.append(" with the Base address in the data - see SMART-CONTRACT WALLETS below. Until then this row is served from the exceptions reserve after designation, for the whole claim window.");
+  }
+  $("r-cw").append(box);
+}
+// informational marker: code at the looked-up address on BASE (static text, DOM-built)
+function renderBaseCodeMarker() {
+  const box = document.createElement("div");
+  box.className = "panel warn"; box.style.margin = "10px 0 0";
+  const s = document.createElement("strong"); s.textContent = "This address has contract code on Base.";
+  box.append(s, " A claim must be sent by the address itself - if it is a smart-contract wallet, it must be able to send an arbitrary transaction on Base. See the notice above.");
+  $("r-cw").append(box);
+}
+async function loadRow() {
+  if (!viewAddr || killed) return;
+  const renderedFor = viewAddr;
+  row = null;
+  $("btn-claim").disabled = true;
+  $("btn-addtoken").style.display = "none";
+  $("wallet-show").style.display = "none";
+  $("advanced").style.display = "none";
+  $("r-cw").innerHTML = "";
+  $("tx-note").textContent = "";
+  if (!tableVerified || !tableIndex) {
+    // S05: no lookup before EVERY table check passed - the state is shown, nothing is read
+    setRow("-", '<span class="pend">table not verified</span>', '<span class="muted">-</span>',
+      "The published table has not been verified on this page yet (its index or checksum file could not be loaded) - nothing is looked up until every table check passes. The page retries by itself; press REFRESH to retry now.");
+    return;
+  }
+  setRow("...", '<span class="muted">looking up</span>', '<span class="muted">-</span>', "Fetching your row from the published table...");
+  if (!keccakSelfTest()) { kill("the built-in hash function failed its self-test"); return; }   // re-checked at use time, not only at boot
+  try {
+    const shardName = "proofs/" + viewAddr.slice(2, 4) + ".json";
+    const shard = await checkedTableFile(shardName);
+    if (viewAddr !== renderedFor) return;
+    if (!shard || typeof shard !== "object") throw tamper("malformed shard");
+    const entry = Object.prototype.hasOwnProperty.call(shard, viewAddr) ? shard[viewAddr] : null;
+    if (!entry) {
+      // Absence: only asserted after the served shard proved byte-identical to the published one.
+      const markers = [];
+      if (tableIndex.contractWallets) {
+        try {
+          const list = await checkedTableFile(tableIndex.contractWallets);
+          if (list && typeof list === "object") {
+            for (const ch of ["eth", "polygon"]) {          // both chains are tried; each hit is its own marker (S08)
+              const key = ch + ":" + viewAddr;
+              if (!Object.prototype.hasOwnProperty.call(list, key)) continue;
+              const e = list[key];
+              if (e && typeof e === "object" && e.chain === ch) markers.push({ chain: ch, entry: e });
+              else console.warn("contract-wallets.json: malformed entry under " + key + " (chain field != key prefix) - ignored");
+            }
+          }
+        } catch (e) { if (e && e.tampered) throw e; /* the marker is informational when the list is missing */ }
+      }
+      if (viewAddr !== renderedFor) return;
+      const anchored = !!sums;
+      setRow("0 TPRO", anchored ? '<span class="pend">not in the published table</span>' : '<span class="pend">not in the served table (unverified copy)</span>',
+        anchored ? '<span class="ok">✓ served table verified intact</span>' : '<span class="muted">-</span>',
+        anchored
+          ? "This address has no row in the published table (the copy served here is byte-identical to the published one). Reasons: no TPRO at the snapshot blocks, an exchange custody wallet, or a contract address (see the notice). See the FAQ."
+          : "This address has no row in the table copy served here - and this test deployment is not integrity-pinned, so compare with the published table before drawing conclusions.");
+      for (const m of markers) renderContractWalletMarker(m.chain, m.entry);
+      return;
+    }
+    if (typeof entry.amount !== "string" || !VALID_DEC.test(entry.amount)) throw tamper("malformed amount");
+    if (!Array.isArray(entry.proof) || entry.proof.length > 64 || !entry.proof.every((p) => typeof p === "string" && VALID_HASH.test(p))) {
+      throw tamper("malformed proof");
+    }
+    const amount = BigInt(entry.amount);
+    const proof = entry.proof.map((p) => p.toLowerCase());
+    // LOCAL verification of the served proof against the pinned root. A shard
+    // that does not verify means the table copy is corrupted or tampered.
+    const computed = proofRoot(leafOf(viewAddr, amount), proof);
+    if (computed !== pinnedRoot || (chain && computed !== chain.root)) {
+      setRow(fmtTPRO(amount) + " TPRO", '<span class="bad">unverified</span>', '<span class="bad">FAILED</span>', "");
+      kill("the proof served for this address does not lead to the verified root");
+      return;
+    }
+    // The row is proven against the pinned root. It and the manual path are published NOW, before any chain
+    // read (S06): an RPC outage must never hide the exact call a holder can send without this page.
+    row = { address: viewAddr, amount, proof, claimed: null };
+    renderAdvanced(row);
+    let statusHtml, note;
+    if (previewMode()) {
+      statusHtml = '<span class="pend">preview - claims open at launch</span>';
+      note = "Your row is in the published table and its proof verifies against the root. Claims open when the contract goes live; come back to this page then.";
+    } else if (!chainVerified || !chain) {
+      statusHtml = '<span class="pend">unknown - contract not verified on this page, REFRESH</span>';
+      note = "Your row is in the published table and its proof verifies against the pinned root. The contract on Base could not be verified from this page right now, so its claimed status is unknown and CLAIM stays off. The exact call under \"Claim without this page\" is valid on its own. Press REFRESH to retry.";
+    } else {
+      try {
+        const c = await callUint(C.base.distributor, SEL.isClaimed + addrWord(viewAddr));
+        if (viewAddr !== renderedFor) return;
+        row.claimed = c === 1n;
+        if (row.claimed) {
+          statusHtml = '<span class="ok">CLAIMED ✓</span>';
+          note = "This row has been paid to the address on Base.";
+        } else if (nowTs() >= chain.sunsetTime) {
+          statusHtml = '<span class="bad">WINDOW CLOSED</span>';
+          note = "The claim window closed at " + fmtDateTime(chain.sunsetTime) + " - unclaimed rows are burned.";
+        } else {
+          statusHtml = '<span class="pend">not claimed yet</span>';
+          note = account && viewAddr === account
+            ? "Press CLAIM: one transaction on Base from this address pays the whole row. Read the wallet-prompt box first."
+            : "Only this address itself can claim - connect the wallet holding it to enable the button. Lookup mode is read-only.";
+        }
+      } catch (e) {
+        if (viewAddr !== renderedFor) return;
+        statusHtml = '<span class="pend">unknown - chain read failed, REFRESH</span>';
+        note = "Your row is in the published table and its proof verifies. The contract could not be read right now ("
+          + ((e && e.message) || "rpc error").slice(0, 80) + "), so its claimed status is unknown and CLAIM stays off until a read succeeds. The exact call under \"Claim without this page\" is valid on its own. Press REFRESH to retry.";
+      }
+    }
+    setRow(fmtTPRO(amount) + " TPRO", statusHtml, '<span class="ok">✓ verifies against the root</span>', note, "exact: " + fmtExact(amount));
+    if (!previewMode()) {
+      $("btn-addtoken").style.display = row.claimed === true && account === viewAddr ? "inline-block" : "none";
+      armClaimButton();
+      // Informational only and NON-BLOCKING (S06): code at this address on Base. Real contract code
+      // means a smart-contract wallet - the notice above applies. An EIP-7702 delegation designator
+      // (0xef0100 + address) is still a key-controlled EOA. The marker appears when the read arrives.
+      rpcAny("eth_getCode", [viewAddr, "latest"]).then((code) => {
+        if (viewAddr !== renderedFor || !row || row.address !== renderedFor) return;
+        if (VALID_HEX.test(code) && code !== "0x" && !code.toLowerCase().startsWith("0xef0100")) renderBaseCodeMarker();
+      }).catch(() => { /* informational */ });
+    }
+  } catch (e) {
+    if (viewAddr !== renderedFor) return;
+    if (e && e.tampered) { setRow("-", '<span class="bad">tampered</span>', '<span class="bad">FAILED</span>', ""); kill(e.message); return; }
+    setRow("-", '<span class="bad">lookup failed</span>', '<span class="muted">-</span>',
+      "Could not read the table - " + (e && e.message ? e.message.slice(0, 100) : "error") + ". Press REFRESH to retry; nothing is enabled until the reads succeed.");
+  }
+}
+
+function renderAdvanced(r) {
+  if (previewMode()) return;
+  const dist = toChecksum(C.base.distributor);
+  const data = claimCalldata(r.address, r.amount, r.proof);
+  $("advanced-text").textContent =
+    "Contract: " + dist + "  (Base, chain id 8453) - " + C.base.explorer + "/address/" + dist + "#writeContract\n"
+    + "Function: claim(address account, uint256 amount, bytes32[] proof)   value: 0 ETH\n"
+    + "account:  " + toChecksum(r.address) + "\n"
+    + "amount:   " + r.amount.toString() + "\n"
+    + "proof:    " + JSON.stringify(r.proof) + "\n"
+    + "calldata: " + data + "\n"
+    + "Send it from the account itself (msg.sender must equal account). Anyone can verify the proof against merkleRoot().";
+  $("advanced").style.display = "block";
+}
+function claimCalldata(addr, amount, proof) {
+  // claim(address account, uint256 amount, bytes32[] proof):
+  // head = account, amount, offset of the array (0x60); tail = length + elements.
+  return SEL.claim + addrWord(addr) + uintWord(amount) + uintWord(0x60)
+    + uintWord(proof.length) + proof.map((p) => p.slice(2)).join("");
+}
+function armClaimButton() {
+  const btn = $("btn-claim");
+  // BOTH verification flags, a KNOWN unclaimed status, the connected account = the row (S05/S06)
+  const armed = !!(row && row.claimed === false && tableVerified && chainVerified && !killed && !previewMode() && chain
+    && account && viewAddr === account && nowTs() < chain.sunsetTime);
+  btn.disabled = !armed;
+  if (armed) { $("ws-to").textContent = toChecksum(C.base.distributor); $("wallet-show").style.display = "block"; }
+  else $("wallet-show").style.display = "none";
+}
+function revertReason(e) {
+  const hay = JSON.stringify([e && e.data, e && e.message] || "");
+  const m = /0x[0-9a-f]{8}/i.exec(hay);
+  return (m && ERRORS[m[0].toLowerCase()]) || null;
+}
+
+// -- claim ----------------------------------------------------------------------------
+let claiming = false;
+// Claimed(address indexed account, uint256 amount) - `cast sig-event "Claimed(address,uint256)"`
+const CLAIMED_TOPIC = "0xd8138f8a3f377c5259ca548e70e4c2de94f129f5a11036a15b69513cba2b426a";
+// A successful receipt is OUR claim only if it went TO the distributor and carries the Claimed event for the
+// account (H07): a wallet returning the hash of some unrelated successful transaction never shows as "claimed".
+function receiptIsOurClaim(rc, acct) {
+  if (!rc || typeof rc !== "object") return false;
+  const dist = C.base.distributor.toLowerCase();
+  if (typeof rc.to !== "string" || rc.to.toLowerCase() !== dist) return false;
+  if (!Array.isArray(rc.logs)) return false;
+  const acctWord = "0x" + addrWord(acct);
+  return rc.logs.some((l) => l && typeof l === "object"
+    && typeof l.address === "string" && l.address.toLowerCase() === dist
+    && Array.isArray(l.topics) && l.topics.length >= 2
+    && typeof l.topics[0] === "string" && l.topics[0].toLowerCase() === CLAIMED_TOPIC
+    && typeof l.topics[1] === "string" && l.topics[1].toLowerCase() === acctWord);
+}
+async function doClaim() {
+  if (claiming) return;
+  if (killed || !tableVerified || !chainVerified || !chain || previewMode()) { toast("Page verification incomplete - not claiming"); return; }
+  if (!row || !account || row.address !== account) { toast("Connect the wallet that holds this row"); return; }
+  if (row.claimed === true) { toast("Already claimed"); return; }
+  if (row.claimed !== false) { toast("Claimed status unknown - press REFRESH first"); return; }
+  claiming = true;
+  const note = $("tx-note");
+  try {
+    // Re-check what can change between the lookup and the click: the root (a wrong RPC answer earlier),
+    // the claimed flag (claimed elsewhere) and the clock (sunset passed - round 4, R3-6), by BLOCK time.
+    const [rootNow, claimedNow, latest] = await Promise.all([
+      callWord(C.base.distributor, SEL.merkleRoot),
+      callUint(C.base.distributor, SEL.isClaimed + addrWord(account)),
+      rpcAny("eth_getBlockByNumber", ["latest", false]),
+    ]);
+    if (rootNow !== pinnedRoot) { kill("the contract root changed between reads - RPC inconsistency"); return; }
+    if (claimedNow === 1n) { toast("This row is already claimed"); await loadRow(); return; }
+    const blockTs = (latest && VALID_HEX.test(latest.timestamp || "")) ? BigInt(latest.timestamp) : nowTs();
+    if (blockTs >= chain.sunsetTime || nowTs() >= chain.sunsetTime) {
+      toast("The claim window has closed - nothing was sent"); await loadChain().catch(() => {}); await loadRow(); return;
+    }
+    if (proofRoot(leafOf(account, row.amount), row.proof) !== rootNow) { kill("proof re-verification failed"); return; }
+    const data = claimCalldata(account, row.amount, row.proof);
+    // Pre-flight: simulate the exact call as the account (round 4, R3-11) - a revert is decoded and stops the send.
+    try {
+      await rpcAny("eth_call", [{ from: account, to: C.base.distributor, data }, "latest"]);
+    } catch (e) {
+      const why = revertReason(e);
+      if (why || (e instanceof RpcError)) { toast("Not sent - the contract would reject it: " + (why || "unknown reason")); if (why && why.includes("closed")) await loadChain().catch(() => {}); return; }
+      throw e;
+    }
+    await switchChain(C.base);
+    note.textContent = "Confirm the transaction in your wallet - compare it with the box above...";
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [{ from: account, to: C.base.distributor, data, value: "0x0", chainId: C.base.chainIdHex }],
+    });
+    if (!VALID_HASH.test(txHash)) {
+      note.textContent = "Sent - the wallet returned a malformed tx id; check the wallet's own activity view, then REFRESH.";
+      return;
+    }
+    const hash = txHash.toLowerCase();
+    // DOM-built link: the wallet-returned hash never touches innerHTML
+    const link = document.createElement("a");
+    link.href = C.base.explorer + "/tx/" + hash; link.rel = "noopener"; link.target = "_blank";
+    link.textContent = short(hash);
+    note.textContent = "";
+    note.append("Claim sent: ", link, " - waiting for confirmation on Base...");
+    toast("Claim sent - waiting for the receipt");
+    const receipt = await waitForReceipt(hash);
+    note.textContent = "";
+    // (the row is re-read BEFORE the note is written: loadRow() clears the note area)
+    if (receipt && receipt.status === "0x1" && receiptIsOurClaim(receipt, account)) {
+      await loadRow(); loadChain().catch(() => {});
+      note.textContent = "";
+      note.append("Confirmed: ", link, " - your TPRO is in the wallet on Base. Add the token to see it.");
+      toast("Claimed - welcome to Base");
+    } else if (receipt && receipt.status === "0x1") {
+      // H07: a successful transaction that is NOT a claim of this row to the distributor (a wallet that returned
+      // another hash, a replaced transaction) - never reported as claimed; the row is re-read from the contract.
+      await loadRow();
+      note.textContent = "";
+      note.append("The transaction ", link, " is confirmed on chain but not as a claim of this row (it did not go to the claim contract with a Claimed event for this address) - press REFRESH and check the row status; if it still says not claimed, nothing was paid.");
+      toast("Confirmed on chain but not as a claim - REFRESH");
+    } else if (receipt) {
+      note.append("The transaction ", link, " REVERTED - nothing was paid. Press REFRESH; if the row shows as claimed, a parallel transaction won; if the window has closed, it was too late. Otherwise ask in the official channel.");
+    } else {
+      note.append("Still pending: ", link, " - check the explorer, then REFRESH.");
+    }
+  } catch (e) {
+    note.textContent = "";
+    toast("Not sent: " + (e && e.message ? e.message.slice(0, 120) : "rejected"));
+  } finally {
+    claiming = false;
+  }
+}
+async function waitForReceipt(hash) {
+  for (let i = 0; i < 60; i++) {                       // bounded: 60 x 3 s
+    await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const rc = await rpcAny("eth_getTransactionReceipt", [hash]);
+      if (rc && typeof rc === "object" && VALID_HEX.test(rc.status || "")) return rc;
+    } catch (e) { /* retry */ }
+  }
+  return null;
+}
+async function addTokenToWallet() {
+  if (!chainVerified || !chain) { toast("Token address not verified yet - refresh first"); return; }
+  try {
+    await switchChain(C.base);
+    await window.ethereum.request({
+      method: "wallet_watchAsset",
+      params: { type: "ERC20", options: { address: toChecksum(C.base.token), symbol: "TPRO", decimals: 18 } },
+    });
+  } catch (e) { toast("Wallet refused: " + ((e && e.message) || "").slice(0, 80)); }
+}
+
+// -- footer links (built from config - our own file - still shape-checked) -------------
+function renderFootLinks() {
+  const f = $("foot-links");
+  f.textContent = "";
+  const add = (label, href, text) => {
+    const a = document.createElement("a");
+    a.href = href; a.rel = "noopener"; a.target = "_blank"; a.textContent = text;
+    f.append(label, a, document.createElement("br"));
+  };
+  if (!previewMode() && VALID_ADDR.test(C.base.distributor)) {
+    add("Claim contract on Base: ", C.base.explorer + "/address/" + C.base.distributor, toChecksum(C.base.distributor));
+  }
+  if (VALID_ADDR.test(C.base.token) && !ZERO_ADDR.test(C.base.token)) {
+    add("TPRO on Base: ", C.base.explorer + "/address/" + C.base.token, toChecksum(C.base.token));
+  }
+  if (tableIndex) {
+    add("Table index + root: ", tableUrl() + "index.json", "index.json");
+    add("Checksums: ", tableUrl() + "SHA256SUMS", "SHA256SUMS");
+    if (tableIndex.contractWallets) add("Contract holders (designation path): ", tableUrl() + tableIndex.contractWallets, tableIndex.contractWallets);
+  }
+  const okUrl = (v) => typeof v === "string" && /^https:\/\/[^\s"'<>]+$/.test(v);
+  for (const [k, label] of [["toolRepo", "Snapshot tool (open source): "], ["announcement", "Official announcement: "], ["community", "Official community channel: "], ["corrections", "Public corrections list: "]]) {
+    const v = C.links && C.links[k];
+    if (okUrl(v)) add(label, v, v);
+  }
+  const mkLink = (id, v) => { const el = $(id); el.textContent = ""; if (okUrl(v)) { const a = document.createElement("a"); a.href = v; a.rel = "noopener"; a.target = "_blank"; a.textContent = "(link)"; el.append(a, " "); } };
+  mkLink("cw-link", C.links && C.links.community);
+  mkLink("corrections-link", C.links && C.links.corrections);
+  const d = $("designation-line");
+  d.textContent = "";
+  if (C.designation && VALID_ADDR.test(C.designation.address || "") && !ZERO_ADDR.test(C.designation.address)) {
+    const c = document.createElement("code"); c.textContent = toChecksum(C.designation.address);
+    d.append("(", C.designation.chain || "Ethereum", ": ", c, ")");
+  } else {
+    d.append("(published in the official announcement)");
+  }
+}
+
+// -- boot -------------------------------------------------------------------------------
+// the table could not be VERIFIED (a transport failure - a mismatch would have killed): unarmed, retried
+function tableFailed(e) {
+  if (killed) return;
+  tableVerified = false; chainVerified = false;
+  $("btn-claim").disabled = true;
+  $("wallet-show").style.display = "none";
+  statusLine("pend", "The published table could not be verified on this page yet ("
+    + ((e && e.message) || "error").slice(0, 100)
+    + ") - nothing is enabled until every table check passes (index, pinned root, checksum file). Retrying automatically; press REFRESH to retry now.");
+  $("integrity-line").textContent = "table integrity: NOT verified - the pinned checksum file is not loaded";
+  $("stats-updated").textContent = "";
+}
+// the contract pass failed (RPC outage): the table stays verified, claims stay off, the manual path stays
+function chainFailed(e) {
+  if (killed) return;
+  chainVerified = false;
+  $("btn-claim").disabled = true;
+  $("wallet-show").style.display = "none";
+  $("verify-line").innerHTML = '<span class="pend">Could not fully verify the contract on Base - claims stay disabled until a refresh succeeds. Your row is safe in the contract; see "Claim without this page" for the manual path.</span>';
+  $("stats-updated").textContent = "(verification incomplete: " + ((e && e.message) || "rpc error").slice(0, 100) + ")";
+}
+// one verification pass: the table first when it is not verified yet, then the contract (S05: the timer and
+// REFRESH re-run the TABLE load while it is incomplete - a page never "recovers" into verified without it)
+async function refreshAll() {
+  if (killed) return;
+  const hadTable = tableVerified;
+  if (!tableVerified) {
+    try { await loadTable(); }
+    catch (e) { if (e && e.tampered) { kill(e.message); return; } tableFailed(e); return; }
+    if (killed || !tableVerified) return;
+  }
+  try { await loadChain(); armClaimButton(); }
+  catch (e) { chainFailed(e); }
+  if (!hadTable && tableVerified && viewAddr) await loadRow();   // the table just verified: re-render the pending lookup
+}
+function boot() {
+  if (!keccakSelfTest()) { kill("the built-in hash function failed its self-test"); return; }
+  if (C.officialHost) $("official-url").textContent = C.officialHost;
+  if (!C.LIVE) {
+    banner("mode", "REHEARSAL / TEST COPY - not the official page. Never act on mainnet tokens based on this copy.");
+  } else {
+    if (C.officialHost && location.hostname !== C.officialHost) {
+      banner("host", "WARNING: this copy is NOT served from " + C.officialHost + " - use the official page only.");
+    }
+    if (previewMode()) {
+      banner("mode", "PREVIEW - the snapshot table is published for review. Look your address up and check its proof. Claims open at launch on this page; before launch it never asks you to connect a wallet.", "note");
+    }
+  }
+  if (previewMode()) { $("connect-row").style.display = "none"; $("addr-input").placeholder = "0x... (paste your address - preview lookup)"; }
+  $("btn-connect").onclick = () => connect().catch((e) => toast((e && e.message) || "connect failed"));
+  $("btn-lookup").onclick = () => lookup().catch((e) => { console.error("lookup failed:", e); toast("Lookup failed: " + ((e && e.message) || "error").slice(0, 100) + " - details in the browser console (F12)"); });
+  $("addr-input").addEventListener("keydown", (ev) => { if (ev.key === "Enter") $("btn-lookup").click(); });
+  $("btn-refresh").onclick = () => {
+    rpcCursor = (rpcCursor + 1) % Math.max(1, RPCS.length);
+    refreshAll().catch(() => {}).then(() => loadRow()).catch(() => {});
+  };
+  $("btn-addtoken").onclick = () => addTokenToWallet();
+  $("btn-claim").onclick = () => doClaim();
+  if (window.ethereum && window.ethereum.on) {
+    window.ethereum.on("accountsChanged", () => { if (!claiming) location.reload(); });
+    window.ethereum.on("chainChanged", () => { if (account && !claiming) location.reload(); });
+  }
+  refreshAll().catch(() => {});
+  const tick = () => { if (!killed) refreshAll().catch(() => {}); setTimeout(tick, pollMs); };
+  setTimeout(tick, pollMs);
+}
+boot();
+})();   // end of the private scope
+</script>
+</body>
+</html>

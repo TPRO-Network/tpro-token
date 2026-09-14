@@ -1,0 +1,9 @@
+{
+ "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
+  "amount": "100000000123456789012345678",
+  "proof": [
+   "0x3d5eb83631c08f8b51ef449f334bc3dfc40d88bed2fbfaf64a4c2bbf6f77d56c",
+   "0xae6f27d149747decb2e867a9072585664d604fe53e2cf010fb3bc17ca1a45f3d"
+  ]
+ }
+}

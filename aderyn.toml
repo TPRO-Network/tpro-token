@@ -1,0 +1,37 @@
+# Aderyn Configuration File
+version = 1
+root = "."
+src = "contracts/"
+
+[detectors]
+# Triage (2026-08-31, see docs/security-notes.md for the full reasoning):
+# - reentrancy-state-change: single instance flagged is `totalSunsetBurned +=`
+#   after `token.balanceOf(address(this))` in MigrationEscrow.sunset().
+#   balanceOf is a staticcall into our own OZ ERC20 - it cannot reenter.
+#   Slither's full reentrancy detector suite stays active as cross-coverage.
+# - centralization-risk: the escrow's owner powers (pause, caps, relayer
+#   rotation, sunset) ARE the published design - hardware-wallet owner,
+#   Ownable2Step, every power enumerated in NatSpec. The TOKEN has no owner.
+# - local-variable-shadowing: flags the Config STRUCT FIELD names (token,
+#   sink, genesis, ...) that deliberately mirror the state variables they
+#   initialize; there is no actual scope shadowing.
+# Round 3 (2026-09-01): costly-loop and require-revert-in-loop stay ACTIVE.
+# MigrationEscrow.burnPenalties keeps its deliberate fail-loud batch loop, but
+# the per-key work lives in _settlePenalty() so the detectors keep guarding
+# every OTHER loop that may appear later (a project-wide exclusion would have
+# been a control regression).
+# v3 (2026-09-04): contract-locks-ether flags TPROTreasuryLock because it
+# inherits VestingWallet's payable receive(). The v3 override REVERTS on any
+# ETH (EtherNotAccepted), so no ether can ever be locked; the detector is
+# syntactic and cannot see that.
+# Round 4 (2026-09-06, R1-9 correction): with the exclusions OFF, aderyn reports
+# reentrancy-state-change on TWO v3 instances - TPROMerkleDistributor's constructor
+# (balanceOf/totalSupply reads before the immutable writes) and sunset()
+# (balanceOf read before `sunsetBurned +=`). Both are STATICCALLs into our own
+# OpenZeppelin ERC20 (no hooks, no callbacks): nothing can reenter, so the
+# exclusion is justified - but the earlier statement that "none of the v3
+# contracts trigger them" was wrong. centralization-risk and
+# local-variable-shadowing produce no v3 hit (verified 2026-09-05, reviewer 1).
+exclude = ["reentrancy-state-change", "centralization-risk", "local-variable-shadowing", "contract-locks-ether"]
+
+[env]

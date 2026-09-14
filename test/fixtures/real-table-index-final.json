@@ -1,0 +1,27 @@
+{
+ "version": 1,
+ "leafEncoding": [
+  "address",
+  "uint256"
+ ],
+ "ethBlock": 25924192,
+ "ethTimestamp": 1788768599,
+ "ethBlockHash": "0x314f98e7895e66ad983d4b9e2104a9cdd8205d96800f549c6f8706331dd32447",
+ "polygonBlock": 93375710,
+ "polygonTimestamp": 1788768598,
+ "polygonBlockHash": "0x8fe0d378b24927ac26dfa55538058280ea45121e39b6b3c0bea6e1ab87289bd6",
+ "rows": 1351,
+ "totalWei": "1121599880244101341360723559",
+ "merkleRoot": "0xd425ade3c1f33634ea93943f9f67efb9bb911b5440577c038a447c123fd39158",
+ "csv": "snapshot-25924192-93375710.csv",
+ "csvSha256": "7ef8af34c33a0b7a0329791d054f9f6259afc9c503590ce32fa404eed77b2b36",
+ "shards": 256,
+ "contractWallets": "contract-wallets.json",
+ "reserveExceptionsWei": "9857412389686315026563960",
+ "mode": "final",
+ "strictOk": true,
+ "errors": 0,
+ "pinVerified": false,
+ "generatedAt": "2026-09-07T08:35:46Z",
+ "tool": "scripts/snapshot/snapshot.py@6640f0d"
+}

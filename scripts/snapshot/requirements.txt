@@ -1,0 +1,7 @@
+# Direct dependencies of scripts/snapshot/* (pinned; the full resolved set with transitives = requirements.lock,
+# produced by `pip freeze` in a fresh Python 3.12 venv - external review 2026-09-08, S10).
+# Install:  python3.12 -m venv .venv && .venv/bin/pip install -r scripts/snapshot/requirements.lock
+web3==7.16.0
+eth-abi==6.0.0
+eth-utils==6.0.0
+requests==2.34.2

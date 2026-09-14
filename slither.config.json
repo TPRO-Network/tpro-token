@@ -1,0 +1,4 @@
+{
+  "filter_paths": "lib/|test/|script/",
+  "detectors_to_exclude": "timestamp,cyclomatic-complexity"
+}
