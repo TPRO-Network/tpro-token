@@ -7,7 +7,7 @@
 //
 //   node website/verify_deploy.mjs <site-dir>                      # local: config.js + table/ consistency
 //   node website/verify_deploy.mjs <site-dir> --rpc                 # + read merkleRoot/genesis/token/sunsetTime on Base
-//   node website/verify_deploy.mjs <site-dir> --table ./table-sample/    # the gate on the sample table (CI)
+//   node website/verify_deploy.mjs <site-dir> --table ./table-sample/    # the gate on the sample table (the public-repo export runs this)
 //   node website/verify_deploy.mjs <site-dir> --served https://claim.tpro.network
 //                                                                   # + compare the SERVED files with the local ones,
 //                                                                   #   check the security headers and the DNS host
@@ -38,7 +38,7 @@ const sandbox = { window: {} };
 vm.runInNewContext(cfgSrc, sandbox, { timeout: 1000 });
 const C = sandbox.window.CLAIM_CONFIG;
 if (!C || typeof C !== "object") { console.error("config.js did not define window.CLAIM_CONFIG"); process.exit(1); }
-// --table <relative url> overrides config.js table.url (CI and the public-repo export run the gate on table-sample/)
+// --table <relative url> overrides config.js table.url (the public-repo export runs the gate on table-sample/)
 const tableOverride = args.includes("--table") ? args[args.indexOf("--table") + 1] : null;
 const tableDir = join(site, (tableOverride || C.table.url || "./table/").replace(/^\.\//, ""));
 console.log(`[config] LIVE=${C.LIVE} distributor=${C.base.distributor} token=${C.base.token} table=${tableDir}`);

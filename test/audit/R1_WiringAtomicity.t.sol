@@ -5,7 +5,11 @@ pragma solidity 0.8.26;
 // two-transaction CREATE deployment in script/DeployV3.s.sol).
 //
 // STATUS: all tests PASS against the current code. They do not show a bug in
-// the contracts; they pin down EVM facts the deploy procedure relies on:
+// the contracts; they pin down EVM facts the deploy procedure relies on.
+// Written so that they hold in both Foundry test modes (classic, and the
+// isolated + dynamically linked mode that became the default in Foundry 1.8):
+// reverting creations are asserted with vm.expectRevert, never try/catch, and
+// no nonce prediction spans a probe call.
 //  (1) CREATE (nonce prediction): a mined-but-reverted distributor creation
 //      consumes the predicted address forever - the genesis minted to it in
 //      tx1 becomes unreachable (no code, no key), and a retry can never land
@@ -41,9 +45,8 @@ contract R1_WiringAtomicityTest is Test {
         assertEq(vm.getNonce(address(this)), n + 1);
 
         // tx2 mined but reverted (BadSunsetTime stands in for ANY constructor revert or OOG)
-        try new TPROMerkleDistributor(address(token), ROOT, GENESIS, block.timestamp) returns (TPROMerkleDistributor) {
-            fail();
-        } catch {}
+        vm.expectRevert(TPROMerkleDistributor.BadSunsetTime.selector);
+        new TPROMerkleDistributor(address(token), ROOT, GENESIS, block.timestamp);
 
         // the failed creation consumed the nonce ...
         assertEq(vm.getNonce(address(this)), n + 2, "failed CREATE still consumes the nonce");
@@ -84,9 +87,8 @@ contract R1_WiringAtomicityTest is Test {
 
         // tx2 fails transiently (simulated: the wiring read reverts this once)
         vm.mockCallRevert(address(token), abi.encodeCall(token.balanceOf, (distPredicted)), "transient");
-        try new TPROMerkleDistributor{salt: SALT}(address(token), ROOT, GENESIS, sunset) returns (TPROMerkleDistributor) {
-            fail();
-        } catch {}
+        vm.expectRevert(bytes("transient"));
+        new TPROMerkleDistributor{salt: SALT}(address(token), ROOT, GENESIS, sunset);
         vm.clearMockedCalls();
         assertEq(distPredicted.code.length, 0, "address not consumed by the failed creation");
 
@@ -116,7 +118,10 @@ contract R1_WiringAtomicityTest is Test {
         address distPredicted = vm.computeCreate2Address(SALT, keccak256(initCode));
         assertEq(distPredicted, vm.computeCreate2Address(SALT, keccak256(initCode), factory));
 
-        // BEFORE tx1: the init code reverts (no token code yet) -> the factory call reverts, nothing consumed
+        // BEFORE tx1: the init code reverts (no token code yet) -> the factory call reverts, nothing consumed.
+        // Sent by a third party: the deployer's nonce prediction must not depend on a probe (in isolated
+        // test mode every call from an account is its own transaction and consumes a nonce).
+        vm.prank(makeAddr("anyone"));
         (bool ok,) = factory.call(abi.encodePacked(SALT, initCode));
         assertFalse(ok);
         assertEq(distPredicted.code.length, 0);

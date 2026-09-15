@@ -85,7 +85,7 @@ window.CLAIM_CONFIG = {
 
   // Links shown in the footer / FAQ. Empty string = link hidden.
   links: {
-    toolRepo: "",        // PUBLIC repo of the snapshot tool (published at launch)
+    toolRepo: "",        // the PUBLIC repository of the snapshot tool, the contracts and this page
     announcement: "",    // the official announcement with the root + sha256
     community: "",       // the official community channel for the manual paths
     corrections: "",     // the public corrections list (post-T0 policy), if any

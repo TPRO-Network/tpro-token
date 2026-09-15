@@ -80,7 +80,7 @@ Dispositions below.
 
 ## Verification after the fix round
 
-86 Foundry tests in the full suite (unit, fuzz, invariant, known-answer fixtures, deploy-script guards; the deploy-script guards join this repository at launch together with the deploy script, 48 tests run here until then), 100%
+86 Foundry tests in the full suite (unit, fuzz, invariant, known-answer fixtures, deploy-script guards; the deploy-script guards join this repository at launch together with the deploy script, 48 tests run here until then; Foundry 1.8 reports the six invariant predicates as one campaign, so its summary line reads 81 and 43), 100%
 line, statement, branch and function coverage of `contracts/`, Slither and Aderyn without
 findings (exclusions documented), 169 offline checks of the tool's guard logic
 (`scripts/snapshot/selftest.py`), the page gate green on the sample table, seven browser

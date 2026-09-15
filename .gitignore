@@ -16,7 +16,6 @@ __pycache__/
 *.db
 data/
 tmp/
-# oracle sync artifacts (cron-managed, read-only copies)
 # the real snapshot table lives next to the page only at publication - never in git before the first preview publication
 website/table/
 # the final table copied to the repo root on the snapshot day for the deploy script (TABLE_INDEX=table/index.json)
